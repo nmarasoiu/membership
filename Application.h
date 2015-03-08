@@ -1,8 +1,8 @@
 /**********************************
- * FILE NAME: Application.h
- *
- * DESCRIPTION: Header file of all classes pertaining to the Application Layer
- **********************************/
+* FILE NAME: Application.h
+*
+* DESCRIPTION: Header file of all classes pertaining to the Application Layer
+**********************************/
 
 #ifndef _APPLICATION_H_
 #define _APPLICATION_H_
@@ -16,8 +16,8 @@
 #include "Queue.h"
 
 /**
- * global variables
- */
+* global variables
+*/
 int nodeCount = 0;
 
 /*
@@ -27,26 +27,31 @@ int nodeCount = 0;
 #define TOTAL_RUNNING_TIME 700
 
 /**
- * CLASS NAME: Application
- *
- * DESCRIPTION: Application layer of the distributed system
- */
-class Application{
+* CLASS NAME: Application
+*
+* DESCRIPTION: Application layer of the distributed system
+*/
+class Application {
 private:
-	// Address for introduction to the group
-	// Coordinator Node
-	char JOINADDR[30];
-	EmulNet *en;
+    // Address for introduction to the group
+    // Coordinator Node
+    char JOINADDR[30];
+    EmulNet *en;
     Log *log;
-	MP1Node **mp1;
-	Params *par;
+    MP1Node **mp1;
+    Params *par;
 public:
-	Application(char *);
-	virtual ~Application();
-	Address getjoinaddr();
-	int run();
-	void mp1Run();
-	void fail();
+    Application(char *);
+
+    virtual ~Application();
+
+    Address getjoinaddr();
+
+    int run();
+
+    void mp1Run();
+
+    void fail();
 };
 
 #endif /* _APPLICATION_H__ */

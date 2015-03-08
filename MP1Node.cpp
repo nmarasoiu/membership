@@ -5,6 +5,13 @@
 * 				Definition of MP1Node class functions.
 **********************************/
 
+#include <AppKit/AppKit.h>
+#include <stddef.h>
+#include <GameKit/GameKit.h>
+#include <Tcl/tcl.h>
+#include <Tk/tk.h>
+#include <Kernel/string.h>
+#include <tclDecls.h>
 #include "MP1Node.h"
 
 /*
@@ -55,14 +62,14 @@ int MP1Node::recvLoop() {
 */
 int MP1Node::enqueueWrapper(void *env, char *buff, int size) {
     Queue q;
-    return q.enqueue((queue<q_elt> *) env, (void *) buff, size);
+    return q.enqueue((queue <q_elt> *) env, (void *) buff, size);
 }
 
 /**
 * FUNCTION NAME: nodeStart
 *
 * DESCRIPTION: This function bootstraps the node
-* 				All initializations routines for a member.
+* 				All initializations routines for a members.
 * 				Called by the application layer.
 */
 void MP1Node::nodeStart(char *servaddrstr, short servport) {
@@ -145,7 +152,7 @@ int MP1Node::introduceSelfToGroup(Address *joinaddr) {
         log->LOG(&memberNode->addr, s);
 #endif
 
-        // send JOINREQ message to introducer member
+        // send JOINREQ message to introducer members
         emulNet->ENsend(&memberNode->addr, joinaddr, (char *) msg, msgsize);
 
         free(msg);
@@ -169,7 +176,7 @@ int MP1Node::finishUpThisNode() {
 /**
 * FUNCTION NAME: nodeLoop
 *
-* DESCRIPTION: Executed periodically at each member
+* DESCRIPTION: Executed periodically at each members
 * 				Check your messages in queue and perform membership protocol duties
 */
 void MP1Node::nodeLoop() {
@@ -216,26 +223,77 @@ void MP1Node::checkMessages() {
 * DESCRIPTION: Message handler for different message types
 */
 bool MP1Node::recvCallBack(void *env, char *data, int size) {
-    /*
-     * Your code goes here
-     */
-    MessageHdr *msgHdr = (MessageHdr *) data;
-    MsgTypes msgType = msgHdr->msgType;
-    Address *payloadAddress = (Address *) (++data);
-    char *payload = data + sizeof(memberNode->addr.addr);
+    Address thisNodeAddress = this->memberNode->addr;
+    vector<MemberListEntry> memberList = memberNode->memberList;
+
+    Message *msg = (Message *) data;
+    Address from = msg->from;
+    MsgTypes msgType = msg->hdr.msgType;
+
     if (msgType == JOINREQ) {
-        log->logNodeAdd(&this->memberNode->addr, payloadAddress);
-        size_t msgsize = sizeof(MessageHdr) + 1;
-        MessageHdr *msg = (MessageHdr *) malloc(msgsize * sizeof(char));
-
-        // create JOINREP message: format of data is empty for now (meaning ok, you joined) {struct Address myaddr}
-        msg->msgType = JOINREP;
-//        memcpy((char *) (msg + 1), &memberNode->addr.addr,);
-//        memcpy((char *) (msg + 1) + 1 + sizeof(memberNode->addr.addr), &memberNode->heartbeat, sizeof(long));
-        emulNet->ENsend(&memberNode->addr, payloadAddress, (char *) msg, msgsize);
-
-        free(msg);
+        replyToJoin(thisNodeAddress, memberList, msg, from);
+    } else if (msgType == JOINREP) {
+        recordMembers(thisNodeAddress, msg, from);
+    } else if (msgType == HEARTBEAT) {
+        updateMember(thisNodeAddress, msg, from);
     }
+}
+
+void MP1Node::updateMember(Address address, Message *incomingMsg, Address from) {
+    vector<MemberListEntry> currentMembers = this->memberNode->memberList;
+    for (int i = 0; i < incomingMsg->hdr.memberCount; i++) {
+        if (currentMembers[i].id == incomingMsg->members->id
+                && currentMembers[i].port == incomingMsg->members->port
+                && currentMembers[i].heartbeat < incomingMsg->members->heartbeat) {
+            currentMembers[i].heartbeat = incomingMsg->members->heartbeat;
+            currentMembers[i].timestamp = this->localTimestamp;
+        }
+    }
+}
+
+void MP1Node::recordMembers(Address &thisNodeAddress, Message *incomingMsg, Address &from) {
+    log->logNodeAdd(&thisNodeAddress, &from);
+    this->memberNode->memberList = vector<MemberListEntry>(incomingMsg->hdr.memberCount);
+    vector<MemberListEntry> currentMembers = this->memberNode->memberList;
+    for (int i = 0; i < incomingMsg->hdr.memberCount; i++) {
+        currentMembers[i] = incomingMsg->members[i];
+    }
+}
+
+void MP1Node::replyToJoin(Address &thisNodeAddress, vector<MemberListEntry> &memberList, Message *incomingMsg, Address &from) {
+    log->logNodeAdd(&thisNodeAddress, &from);
+    size_t membersCount = memberList.size();
+
+    Message *replyMsg = new Message();
+    replyMsg->members = (MemberListEntry *) malloc(membersCount * sizeof(Member));
+
+    // create JOINREP message: format of data is empty for now (meaning ok, you joined) {struct Address myaddr}
+    replyMsg->hdr.msgType = JOINREP;
+    replyMsg->hdr.memberCount = memberList.size();
+    replyMsg->from = thisNodeAddress;
+
+    for (unsigned long i = 0; i < membersCount; i++) {
+        MemberListEntry &m = this->memberNode->memberList.at(i);
+        replyMsg->members[i].id = m.id;
+        replyMsg->members[i].port = m.port;
+        replyMsg->members[i].heartbeat = m.heartbeat;
+        replyMsg->members[i].timestamp = m.timestamp;
+    }
+
+    size_t msgsize = bytesCount(replyMsg);
+    emulNet->ENsend(&memberNode->addr, &from, (char *) msg, msgsize);
+
+    free(replyMsg->members);
+}
+
+typedef struct Message {
+    MessageHdr hdr;
+    Address from;
+    MemberListEntry *members;
+};
+
+size_t MP1Node::bytesCount(Message *messageStruct) {
+    return sizeof(messageStruct->hdr) + messageStruct->hdr.memberCount * sizeof(messageStruct->members);
 }
 
 /**
@@ -246,11 +304,21 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
 * 				Propagate your membership list
 */
 void MP1Node::nodeLoopOps() {
+    localTimestamp++;
+    //send heartbeats
 
-    /*
-     * Your code goes here
-     */
+    vector<MemberListEntry> currentMembers = this->memberNode->memberList;
+    for (int i = 0; i < currentMembers.size(); i++) {
+        Address *destAddr = new Address();
+        memcpy(&destAddr->addr, &currentMembers.data()[i].id, sizeof(int));
+        memcpy(&destAddr->addr, &currentMembers.data()[i].port, sizeof(short));
 
+        Message *msg = new Message();
+        msg->hdr.msgType = HEARTBEAT;
+        emulNet->ENsend(&memberNode->addr, destAddr, (char *) msg, bytesCount(msg));
+
+        free(msg);
+    }
     return;
 }
 

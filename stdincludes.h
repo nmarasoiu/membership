@@ -1,8 +1,8 @@
 /**********************************
- * FILE NAME: stdincludes.h
- *
- * DESCRIPTION: standard header file
- **********************************/
+* FILE NAME: stdincludes.h
+*
+* DESCRIPTION: standard header file
+**********************************/
 
 #ifndef _STDINCLUDES_H_
 #define _STDINCLUDES_H_
@@ -39,7 +39,7 @@
 using namespace std;
 
 #define STDCLLBKARGS (void *env, char *data, int size)
-#define STDCLLBKRET	void
+#define STDCLLBKRET    void
 #define DEBUGLOG 1
-		
+
 #endif	/* _STDINCLUDES_H_ */
