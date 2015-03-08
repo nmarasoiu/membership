@@ -222,7 +222,7 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
     MessageHdr *msgHdr = (MessageHdr *) data;
     MsgTypes msgType = msgHdr->msgType;
     Address *payloadAddress = (Address *) (++data);
-    char *payload = data + sizeof(memberNode->addr.addr)
+    char *payload = data + sizeof(memberNode->addr.addr);
     if (msgType == JOINREQ) {
         log->logNodeAdd(&this->memberNode->addr, payloadAddress);
         size_t msgsize = sizeof(MessageHdr) + 1;
