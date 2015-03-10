@@ -15,7 +15,6 @@
 #include "Member.h"
 #include "EmulNet.h"
 #include "Queue.h"
-#include "MP1Node.cpp"
 
 /**
 * Macros
