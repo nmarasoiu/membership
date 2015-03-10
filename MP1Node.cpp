@@ -164,6 +164,7 @@ int MP1Node::finishUpThisNode() {
     /*
      * Your code goes here
      */
+	return 0;
 }
 
 /**
@@ -274,16 +275,10 @@ void MP1Node::replyToJoin(Address &thisNodeAddress, vector<MemberListEntry> &mem
     }
 
     size_t msgsize = bytesCount(replyMsg);
-    emulNet->ENsend(&memberNode->addr, &from, (char *) msg, msgsize);
+    emulNet->ENsend(&memberNode->addr, &from, (char *) replyMsg, msgsize);
 
     free(replyMsg->members);
 }
-
-typedef struct Message {
-    MessageHdr hdr;
-    Address from;
-    MemberListEntry *members;
-};
 
 size_t MP1Node::bytesCount(Message *messageStruct) {
     return sizeof(messageStruct->hdr) + messageStruct->hdr.memberCount * sizeof(messageStruct->members);

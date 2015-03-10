@@ -47,6 +47,12 @@ typedef struct MessageHdr {
     long memberCount=0;
 } MessageHdr;
 
+typedef struct Message {
+    MessageHdr hdr;
+    Address from;
+    MemberListEntry *members;
+} Message;
+
 /**
 * CLASS NAME: MP1Node
 *
@@ -98,11 +104,9 @@ public:
 
     virtual ~MP1Node();
 
-    void replyToJoin(Address &thisNodeAddress, vector &memberList, Message *msg, Address &from);
+    void replyToJoin(Address &thisNodeAddress, vector<MemberListEntry> &memberList, Message *msg, Address &from);
 
     size_t bytesCount(Message * messageStruct);
-
-    void recordMembers(Address &thisNodeAddress, Address &from);
 
     void recordMembers(Address &thisNodeAddress, Message *incomingMsg, Address &from);
 
