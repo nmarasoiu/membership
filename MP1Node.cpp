@@ -5,7 +5,9 @@
 * 				Definition of MP1Node class functions.
 **********************************/
 
+#include <AppKit/AppKit.h>
 #include "MP1Node.h"
+#include "Member.h"
 
 /*
  * Note: You can change/add any functions in MP1Node.{h,cpp}
@@ -225,7 +227,7 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
     MsgTypes msgType = msg->hdr.msgType;
 
     if (msgType == JOINREQ) {
-        replyToJoin(thisNodeAddress, memberList, msg, from);
+        replyToJoin(thisNodeAddress, memberList, from);
     } else if (msgType == JOINREP) {
         recordMembers(thisNodeAddress, msg, from);
     } else if (msgType == HEARTBEAT) {
@@ -235,18 +237,30 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
 
 void MP1Node::updateMember(Address address, Message *incomingMsg, Address from) {
     vector<MemberListEntry> currentMembers = this->memberNode->memberList;
+    bool found=false;
     for (int i = 0; i < incomingMsg->hdr.memberCount; i++) {
         if (currentMembers[i].id == incomingMsg->members->id
-                && currentMembers[i].port == incomingMsg->members->port
-                && currentMembers[i].heartbeat < incomingMsg->members->heartbeat) {
-            currentMembers[i].heartbeat = incomingMsg->members->heartbeat;
-            currentMembers[i].timestamp = this->localTimestamp;
+                && currentMembers[i].port == incomingMsg->members->port) {
+            found = true;
+            if (currentMembers[i].heartbeat < incomingMsg->members->heartbeat) {
+                currentMembers[i].heartbeat = incomingMsg->members->heartbeat;
+                currentMembers[i].timestamp = this->localTimestamp;
+            }
         }
+    }
+    if(!found){
+        log->logNodeAdd(&this->memberNode->addr, &from);
+        MemberListEntry e = MemberListEntry();
+        e.id = incomingMsg->members->id;
+        e.port = incomingMsg->members->port;
+        e.heartbeat= incomingMsg->members->heartbeat;
+        e.timestamp = this->localTimestamp;
+        currentMembers.push_back(e);
     }
 }
 
 void MP1Node::recordMembers(Address &thisNodeAddress, Message *incomingMsg, Address &from) {
-    log->logNodeAdd(&thisNodeAddress, &from);
+//    log->logNodeAdd(&thisNodeAddress, &from);
     this->memberNode->memberList = vector<MemberListEntry>(incomingMsg->hdr.memberCount);
     vector<MemberListEntry> currentMembers = this->memberNode->memberList;
     for (int i = 0; i < incomingMsg->hdr.memberCount; i++) {
@@ -254,7 +268,7 @@ void MP1Node::recordMembers(Address &thisNodeAddress, Message *incomingMsg, Addr
     }
 }
 
-void MP1Node::replyToJoin(Address &thisNodeAddress, vector<MemberListEntry> &memberList, Message *incomingMsg, Address &from) {
+void MP1Node::replyToJoin(Address &thisNodeAddress, vector<MemberListEntry> &memberList, Address &from) {
     log->logNodeAdd(&thisNodeAddress, &from);
     size_t membersCount = memberList.size();
 

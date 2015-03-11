@@ -103,7 +103,7 @@ public:
 
     virtual ~MP1Node();
 
-    void replyToJoin(Address &thisNodeAddress, vector<MemberListEntry> &memberList, Message *msg, Address &from);
+    void replyToJoin(Address & thisNodeAddress, vector < MemberListEntry > &memberList, Address & from);
 
     size_t bytesCount(Message * messageStruct);
 
