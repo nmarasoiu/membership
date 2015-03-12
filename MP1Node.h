@@ -123,8 +123,6 @@ public:
 
     void updateMember(Message *pMessage, Address from);
 
-    vector<MemberListEntry> *membs();
-
     Address & myAddress();
 };
 

@@ -253,7 +253,7 @@ void MP1Node::updateMember(Message *incomingMsg, Address from) {
         e.port = incomingMsg->members->port;
         e.heartbeat= incomingMsg->members->heartbeat;
         e.timestamp = this->localTimestamp;
-        membs()->push_back(e);
+        memberNode->memberList->push_back(e);
     }
 }
 
@@ -310,8 +310,8 @@ void MP1Node::nodeLoopOps() {
     localTimestamp++;
     //send heartbeats
 
-    for (int i = 0; i < membs()->size(); i++) {
-        MemberListEntry &mem = membs()->at(i);
+    for (int i = 0; i < memberNode->memberList->size(); i++) {
+        MemberListEntry &mem = memberNode->memberList->at(i);
         Address *destAddr = new Address(mem.id, mem.port);
 
         Message *msg = new Message();
