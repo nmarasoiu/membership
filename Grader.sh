@@ -38,6 +38,7 @@ else
 	./Application testcases/singlefailure.conf
 fi
 joincount=`grep joined dbg.log | cut -d" " -f2,4-7 | sort -u | wc -l`
+echo "Join Count = ${joincount}"
 if [ $joincount -eq 100 ]; then
 	grade=`expr $grade + 10`
 	echo "Checking Join..................10/10"
@@ -60,6 +61,8 @@ else
 fi
 failednode=`grep "Node failed at time" dbg.log | sort -u | awk '{print $1}'`
 failcount=`grep removed dbg.log | sort -u | grep $failednode | wc -l`
+echo "Failed nodes = ${failednode}"
+echo "Fail count = ${failcount}"
 if [ $failcount -ge 9 ]; then
 	grade=`expr $grade + 10`
 	echo "Checking Completeness..........10/10"
@@ -67,6 +70,7 @@ else
 	echo "Checking Completeness..........0/10"
 fi
 failednode=`grep "Node failed at time" dbg.log | sort -u | awk '{print $1}'`
+echo "Failed nodes = ${failednode}"
 accuracycount=`grep removed dbg.log | sort -u | grep -v $failednode | wc -l`
 if [ $accuracycount -eq 0 ] && [ $failcount -gt 0 ]; then
 	grade=`expr $grade + 10`
@@ -108,6 +112,7 @@ else
 	fi
 fi
 failednode=`grep "Node failed at time" dbg.log | sort -u | awk '{print $1}'`
+echo "Failed nodes = ${failednode}"
 tmp=0
 cnt=0
 for i in $failednode
@@ -124,6 +129,7 @@ do
 done
 echo "Checking Completeness..........$tmp/10"
 failednode=`grep "Node failed at time" dbg.log | sort -u | awk '{print $1}'`
+echo "Failed nodes = ${failednode}"
 tmp=0
 for i in $failednode
 do

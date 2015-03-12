@@ -43,13 +43,25 @@ enum MsgTypes {
 */
 typedef struct MessageHdr {
     enum MsgTypes msgType;
-    long memberCount=0;
+    long memberCount = 0;
 } MessageHdr;
 
 typedef struct Message {
     MessageHdr hdr;
     Address from;
     MemberListEntry *members;
+public:
+    Message() {
+        allocateMembers(1);
+    }
+
+    Message(int membersCount) {
+        allocateMembers(membersCount);
+    }
+
+    void allocateMembers(int membersCount) {
+        members = (MemberListEntry *) malloc(membersCount * sizeof(Member));
+    }
 } Message;
 
 /**
@@ -63,7 +75,7 @@ private:
     Log *log;
     Params *par;
     Member *memberNode;
-    long localTimestamp=0;
+    long localTimestamp = 0;
     char NULLADDR[6];
 
 public:
@@ -103,13 +115,17 @@ public:
 
     virtual ~MP1Node();
 
-    void replyToJoin(Address & thisNodeAddress, vector < MemberListEntry > &memberList, Address & from);
+    void replyToJoin(vector<MemberListEntry> &memberList, Address &from);
 
-    size_t bytesCount(Message * messageStruct);
+    size_t bytesCount(Message *messageStruct);
 
-    void recordMembers(Address &thisNodeAddress, Message *incomingMsg, Address &from);
+    void recordMembers(Message *incomingMsg, Address &from);
 
-    void updateMember(Address address, Message *pMessage, Address from);
+    void updateMember(Message *pMessage, Address from);
+
+    vector<MemberListEntry> *membs();
+
+    Address & myAddress();
 };
 
 #endif /* _MP1NODE_H_ */

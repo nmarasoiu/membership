@@ -6,6 +6,8 @@
 **********************************/
 
 #include <AppKit/AppKit.h>
+#include <Tcl/tcl.h>
+#include <Tk/tk.h>
 #include "MP1Node.h"
 #include "Member.h"
 
@@ -166,6 +168,7 @@ int MP1Node::finishUpThisNode() {
     /*
      * Your code goes here
      */
+	log->logNodeRemove(&this->memberNode->addr,&this->memberNode->addr);
 	return 0;
 }
 
@@ -219,7 +222,6 @@ void MP1Node::checkMessages() {
 * DESCRIPTION: Message handler for different message types
 */
 bool MP1Node::recvCallBack(void *env, char *data, int size) {
-    Address thisNodeAddress = this->memberNode->addr;
     vector<MemberListEntry> memberList = memberNode->memberList;
 
     Message *msg = (Message *) data;
@@ -227,24 +229,24 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
     MsgTypes msgType = msg->hdr.msgType;
 
     if (msgType == JOINREQ) {
-        replyToJoin(thisNodeAddress, memberList, from);
+        replyToJoin(memberList, from);
     } else if (msgType == JOINREP) {
-        recordMembers(thisNodeAddress, msg, from);
+        recordMembers(msg, from);
     } else if (msgType == HEARTBEAT) {
-        updateMember(thisNodeAddress, msg, from);
+        updateMember(msg, from);
     }
 }
 
-void MP1Node::updateMember(Address address, Message *incomingMsg, Address from) {
-    vector<MemberListEntry> currentMembers = this->memberNode->memberList;
+void MP1Node::updateMember(Message *incomingMsg, Address from) {
     bool found=false;
     for (int i = 0; i < incomingMsg->hdr.memberCount; i++) {
-        if (currentMembers[i].id == incomingMsg->members->id
-                && currentMembers[i].port == incomingMsg->members->port) {
+        MemberListEntry *memb = &membs()->[i];
+        if (memb->id == incomingMsg->members->id
+                && memb->port == incomingMsg->members->port) {
             found = true;
-            if (currentMembers[i].heartbeat < incomingMsg->members->heartbeat) {
-                currentMembers[i].heartbeat = incomingMsg->members->heartbeat;
-                currentMembers[i].timestamp = this->localTimestamp;
+            if (memb->heartbeat < incomingMsg->members->heartbeat) {
+                memb->heartbeat = incomingMsg->members->heartbeat;
+                memb->timestamp = this->localTimestamp;
             }
         }
     }
@@ -255,30 +257,29 @@ void MP1Node::updateMember(Address address, Message *incomingMsg, Address from) 
         e.port = incomingMsg->members->port;
         e.heartbeat= incomingMsg->members->heartbeat;
         e.timestamp = this->localTimestamp;
-        currentMembers.push_back(e);
+        membs()->push_back(e);
     }
 }
 
-void MP1Node::recordMembers(Address &thisNodeAddress, Message *incomingMsg, Address &from) {
+void MP1Node::recordMembers(Message *incomingMsg, Address &from) {
 //    log->logNodeAdd(&thisNodeAddress, &from);
-    this->memberNode->memberList = vector<MemberListEntry>(incomingMsg->hdr.memberCount);
+    this->memberNode->memberList.clear();
     vector<MemberListEntry> currentMembers = this->memberNode->memberList;
     for (int i = 0; i < incomingMsg->hdr.memberCount; i++) {
         currentMembers[i] = incomingMsg->members[i];
     }
 }
 
-void MP1Node::replyToJoin(Address &thisNodeAddress, vector<MemberListEntry> &memberList, Address &from) {
-    log->logNodeAdd(&thisNodeAddress, &from);
+void MP1Node::replyToJoin(vector<MemberListEntry> &memberList, Address &from) {
+    log->logNodeAdd(&myAddress(), &from);
     size_t membersCount = memberList.size();
 
-    Message *replyMsg = new Message();
-    replyMsg->members = (MemberListEntry *) malloc(membersCount * sizeof(Member));
+    Message *replyMsg = new Message(membersCount);
 
     // create JOINREP message: format of data is empty for now (meaning ok, you joined) {struct Address myaddr}
     replyMsg->hdr.msgType = JOINREP;
     replyMsg->hdr.memberCount = memberList.size();
-    replyMsg->from = thisNodeAddress;
+    replyMsg->from = Address(myAddress());
 
     for (unsigned long i = 0; i < membersCount; i++) {
         MemberListEntry &m = this->memberNode->memberList.at(i);
@@ -292,6 +293,10 @@ void MP1Node::replyToJoin(Address &thisNodeAddress, vector<MemberListEntry> &mem
     emulNet->ENsend(&memberNode->addr, &from, (char *) replyMsg, msgsize);
 
     free(replyMsg->members);
+}
+
+Address & MP1Node::myAddress() {
+    return memberNode->addr;
 }
 
 size_t MP1Node::bytesCount(Message *messageStruct) {
@@ -309,19 +314,20 @@ void MP1Node::nodeLoopOps() {
     localTimestamp++;
     //send heartbeats
 
-    vector<MemberListEntry> currentMembers = this->memberNode->memberList;
-    for (int i = 0; i < currentMembers.size(); i++) {
-        Address *destAddr = new Address();
-        memcpy(&destAddr->addr, &currentMembers.data()[i].id, sizeof(int));
-        memcpy(&destAddr->addr, &currentMembers.data()[i].port, sizeof(short));
+    for (int i = 0; i < membs()->size(); i++) {
+        MemberListEntry &mem = membs()->at(i);
+        Address *destAddr = new Address(mem.id+":"+mem.port);
 
         Message *msg = new Message();
         msg->hdr.msgType = HEARTBEAT;
         emulNet->ENsend(&memberNode->addr, destAddr, (char *) msg, bytesCount(msg));
-
         free(msg);
     }
     return;
+}
+
+vector<MemberListEntry> * MP1Node::membs() {
+    return &memberNode->memberList;
 }
 
 /**
