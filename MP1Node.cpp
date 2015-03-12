@@ -237,13 +237,12 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
 void MP1Node::updateMember(Message *incomingMsg, Address from) {
     bool found=false;
     for (int i = 0; i < incomingMsg->hdr.memberCount; i++) {
-        MemberListEntry *memb = &membs()->[i];
-        if (memb->id == incomingMsg->members->id
-                && memb->port == incomingMsg->members->port) {
+        if (memberNode->memberList.at(i).id == incomingMsg->members->id
+                && memberNode->memberList.at(i).port == incomingMsg->members->port) {
             found = true;
-            if (memb->heartbeat < incomingMsg->members->heartbeat) {
-                memb->heartbeat = incomingMsg->members->heartbeat;
-                memb->timestamp = this->localTimestamp;
+            if (memberNode->memberList.at(i).heartbeat < incomingMsg->members->heartbeat) {
+                memberNode->memberList.at(i).heartbeat = incomingMsg->members->heartbeat;
+                memberNode->memberList.at(i).timestamp = this->localTimestamp;
             }
         }
     }
@@ -313,7 +312,7 @@ void MP1Node::nodeLoopOps() {
 
     for (int i = 0; i < membs()->size(); i++) {
         MemberListEntry &mem = membs()->at(i);
-        Address *destAddr = new Address(mem.id+":"+mem.port);
+        Address *destAddr = new Address(mem.id, mem.port);
 
         Message *msg = new Message();
         msg->hdr.msgType = HEARTBEAT;
@@ -321,10 +320,6 @@ void MP1Node::nodeLoopOps() {
         free(msg);
     }
     return;
-}
-
-vector<MemberListEntry> * MP1Node::membs() {
-    return &memberNode->memberList;
 }
 
 /**
