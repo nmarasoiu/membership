@@ -129,6 +129,7 @@ int MP1Node::introduceSelfToGroup(Address *joinaddr) {
         // I am the group booter (first process to join the group). Boot up the group
 #ifdef DEBUGLOG
         log->LOG(&memberNode->addr, "Starting up group...");
+        log->logNodeAdd(&this->memberNode->addr, &this->memberNode->addr);
 #endif
         memberNode->inGroup = true;
     }
