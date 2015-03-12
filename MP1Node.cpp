@@ -5,9 +5,6 @@
 * 				Definition of MP1Node class functions.
 **********************************/
 
-#include <AppKit/AppKit.h>
-#include <Tcl/tcl.h>
-#include <Tk/tk.h>
 #include "MP1Node.h"
 #include "Member.h"
 
