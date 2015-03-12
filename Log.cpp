@@ -49,9 +49,9 @@ void Log::LOG(Address *addr, const char *str, ...) {
     va_list vararglist;
     static char buffer[30000];
     static int numwrites;
-    static char stdstring[30];
-    static char stdstring2[40];
-    static char stdstring3[40];
+    static char stdstring[130];
+    static char stdstring2[140];
+    static char stdstring3[140];
     static int dbg_opened = 0;
 
     if (dbg_opened != 639) {
