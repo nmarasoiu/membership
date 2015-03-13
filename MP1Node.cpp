@@ -353,8 +353,10 @@ Address MP1Node::getJoinAddress() {
 void MP1Node::initMemberListTable(Member *memberNode) {
     memberNode->memberList.clear();
     MemberListEntry e = MemberListEntry();
-    int id = *(int *) (&memberNode->addr.addr);
-    int port = *(short *) (&memberNode->addr.addr[4]);
+    cout << "before port is ";
+    int id = *(int *) memberNode->addr.addr;
+    short port = *(short *) (&memberNode->addr.addr[4]);
+    cout << "port is " << port << "and id is " << id ;
     e.id = id;
     e.port = port;
     e.heartbeat= this->localTimestamp;
