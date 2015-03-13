@@ -318,7 +318,7 @@ void MP1Node::nodeLoopOps() {
     for (int i = 0; i < memberNode->memberList.size(); i++) {
         MemberListEntry &mem = memberNode->memberList.at(i);
         if(mem.timestamp<localTimestamp-1){
-            memberNode->memberList.erase(&memberNode->memberList.at(i));
+            memberNode->memberList.erase(memberNode->memberList.begin()+i);
         }else{
             Address *destAddr = new Address(mem.id, mem.port);
 
