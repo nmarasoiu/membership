@@ -317,16 +317,15 @@ void MP1Node::nodeLoopOps() {
 
     for (int i = 0; i < memberNode->memberList.size(); i++) {
         MemberListEntry &mem = memberNode->memberList.at(i);
-        if(mem.timestamp<localTimestamp-1){
+//        if(mem.timestamp<localTimestamp-1){
 //            memberNode->memberList.erase(memberNode->memberList.begin()+i);
-        }else{
+//        }else{
             Address *destAddr = new Address(mem.id, mem.port);
-
             Message *msg = new Message();
             msg->hdr.msgType = HEARTBEAT;
             emulNet->ENsend(&memberNode->addr, destAddr, (char *) msg, bytesCount(msg));
             free(msg);
-        }
+//        }
     }
     return;
 }
