@@ -241,7 +241,7 @@ void MP1Node::updateMember(Message *incomingMsg, Address from) {
             found = true;
 //            if (memberNode->memberList.at(i).heartbeat < incomingMsg->members->heartbeat) {
 //                memberNode->memberList.at(i).heartbeat = incomingMsg->members->heartbeat;
-                memberNode->memberList.at(i).timestamp = this->localTimestamp;
+//                memberNode->memberList.at(i).timestamp = this->localTimestamp;
 //            }
         }
     }
