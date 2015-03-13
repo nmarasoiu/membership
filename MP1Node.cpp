@@ -224,7 +224,7 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
     MsgTypes msgType = msg->hdr.msgType;
 
     if (msgType == JOINREQ) {
-        updateMember(msg, from);
+//        updateMember(msg, from);
         replyToJoin(from);
     } else if (msgType == JOINREP) {
         recordMembers(msg, from);
