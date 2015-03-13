@@ -115,7 +115,7 @@ public:
 
     virtual ~MP1Node();
 
-    void replyToJoin(vector<MemberListEntry> &memberList, Address &from);
+    void replyToJoin(Address &from);
 
     size_t bytesCount(Message *messageStruct);
 
