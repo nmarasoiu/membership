@@ -98,8 +98,6 @@ int MP1Node::initThisNode(Address *joinaddr) {
     /*
      * This function is partially implemented and may require changes
      */
-    int id = *(int *) (&memberNode->addr.addr);
-    int port = *(short *) (&memberNode->addr.addr[4]);
 
     memberNode->bFailed = false;
     memberNode->inited = true;
@@ -227,6 +225,7 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
     MsgTypes msgType = msg->hdr.msgType;
 
     if (msgType == JOINREQ) {
+        updateMember(msg, from);
         replyToJoin(memberList, from);
     } else if (msgType == JOINREP) {
         recordMembers(msg, from);
@@ -268,7 +267,6 @@ void MP1Node::recordMembers(Message *incomingMsg, Address &from) {
 }
 
 void MP1Node::replyToJoin(vector<MemberListEntry> &memberList, Address &from) {
-    log->logNodeAdd(&myAddress(), &from);
     size_t membersCount = memberList.size();
 
     Message *replyMsg = new Message(membersCount);
@@ -354,6 +352,14 @@ Address MP1Node::getJoinAddress() {
 */
 void MP1Node::initMemberListTable(Member *memberNode) {
     memberNode->memberList.clear();
+    MemberListEntry e = MemberListEntry();
+    int id = *(int *) (&memberNode->addr.addr);
+    int port = *(short *) (&memberNode->addr.addr[4]);
+    e.id = id;
+    e.port = port;
+    e.heartbeat= this->localTimestamp;
+    e.timestamp = this->localTimestamp;
+    memberNode->memberList.push_back(e);
 }
 
 /**
